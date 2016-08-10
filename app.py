@@ -28,7 +28,7 @@ def verify():
     else:
         return 'Error, wrong validation token'
 
-@app.route('/', methods=['POST'])
+@app.route('/webhook', methods=['POST'])
 def webhook():
     payload = request.get_data()
     for sender, message in messenger.messaging_events(payload):
