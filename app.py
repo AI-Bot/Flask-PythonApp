@@ -14,7 +14,7 @@ import messenger
 
 app = Flask(__name__)
 
-FACEBOOK_TOKEN = os.environ['FACEBOOK_TOKEN']
+FACEBOOK_TOKEN ='EAAEAj1gffywBAOSBrW6yUKQCBzmVL2Km0bzCZAxmLZALX0PzwE82DO2YvG2I0BXPaTHMYnJWi6ZB3yZBZAxx1nRNTLqwIRHMQUSO1dcAW92IIZCnAr3SzT4naHNjbUEdem0j0fnI2oWHc1kMuAfKH0JP1MbZC2rwV3TvZBTpzomOLAZDZD'
 bot = None
 
 ###
@@ -23,7 +23,7 @@ bot = None
 
 @app.route('/webhook', methods=['GET'])
 def verify():
-    if request.args.get('hub.verify_token', '') == os.environ['VERIFY_TOKEN']:
+    if request.args.get('hub.verify_token', '') == 'i_dont_have_password'
         return request.args.get('hub.challenge', '')
     else:
         return 'Error, wrong validation token'
