@@ -5,41 +5,47 @@ Werkzeug Documentation:  http://werkzeug.pocoo.org/documentation/
 
 This file creates your application.
 """
-
+import warnings
 import os
 from flask import Flask, render_template, request, redirect, url_for
+
+import chatbot
+import messenger
 
 app = Flask(__name__)
 
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'this_should_be_configured')
 
+FACEBOOK_TOKEN = os.environ['FACEBOOK_TOKEN']
+bot = None
 
 ###
 # Routing for your application.
 ###
 
-@app.route('/')
-def home():
-    """Render website's home page."""
-    return render_template('home.html')
+@app.route('/webhook', methods=['GET'])
+def verify():
+    if request.args.get('hub.verify_token', '') == os.environ['VERIFY_TOKEN']:
+        return request.args.get('hub.challenge', '')
+    else:
+        return 'Error, wrong validation token'
 
-
-@app.route('/about/')
-def about():
-    """Render the website's about page."""
-    return render_template('about.html')
-
+@app.route('/', methods=['POST'])
+def webhook():
+    payload = request.get_data()
+    for sender, message in messenger.messaging_events(payload):
+        print "Incoming from %s: %s" % (sender, message)
+        
+        response = bot.respond_to(message)
+        
+        print "Outgoing to %s: %s" % (sender, response)
+        messenger.send_message(FACEBOOK_TOKEN, sender, response)
+    
+    return "ok"
 
 ###
 # The functions below should be applicable to all Flask apps.
 ###
-
-@app.route('/<file_name>.txt')
-def send_text_file(file_name):
-    """Send your static text file."""
-    file_dot_text = file_name + '.txt'
-    return app.send_static_file(file_dot_text)
-
 
 @app.after_request
 def add_header(response):
