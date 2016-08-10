@@ -35,7 +35,7 @@ def webhook():
         print "Incoming from %s: %s" % (sender, message)
         
         print "Outgoing to %s: %s" % (sender, 'all is well')
-        messenger.send_message(FACEBOOK_TOKEN, sender, response)
+        messenger.send_message(FACEBOOK_TOKEN, sender, 'all is well')
     
     return "ok"
 
