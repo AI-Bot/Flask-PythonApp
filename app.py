@@ -23,7 +23,7 @@ bot = None
 
 @app.route('/webhook', methods=['GET'])
 def verify():
-    if request.args.get('hub.verify_token', '') == 'i_dont_have_password'
+    if request.args.get('hub.verify_token', '') == 'i_dont_have_password':
         return request.args.get('hub.challenge', '')
     else:
         return 'Error, wrong validation token'
