@@ -34,9 +34,7 @@ def webhook():
     for sender, message in messenger.messaging_events(payload):
         print "Incoming from %s: %s" % (sender, message)
         
-        response = bot.respond_to(message)
-        
-        print "Outgoing to %s: %s" % (sender, response)
+        print "Outgoing to %s: %s" % (sender, 'all is well')
         messenger.send_message(FACEBOOK_TOKEN, sender, response)
     
     return "ok"
