@@ -71,6 +71,7 @@ def fetch_statuspnr(request):
     if str(error).lower() == 'true':
         context['pnr_status']='Error: wrong pnr no./missing pnr'
         return context
+    print(parsed_json)
     from_stn = parsed_json['from_station']
     des_stn = parsed_json['reservation_upto']
     date_of_jrny = parsed_json['doj']
@@ -96,6 +97,7 @@ def fetch_statustrain(request):
     
     url = 'http://api.railwayapi.com/live/train/'+str(trainno)+'/doj/' + str(time.strftime("%Y%m%d")) + '/apikey/' + railway_api + '/'
     parsed_json = json.loads(requests.get(url).text)
+    print(parsed_json)
     if str(parsed_json['response_code'])=='204':
         context['train_status'] = 'Wrong Train no'
         return context
@@ -119,6 +121,7 @@ def fetch_stncode(request):
 def stn_code_name(userinp):
     url = 'http://api.railwayapi.com/code_to_name/code/' + str(userinp) + '/apikey/' + railway_api + '/'
     parsed_json = json.loads(requests.get(url).text)
+    print(parsed_json)
     stations = parsed_json['stations']
     l_of_s = len(stations)
     searchobj = userinp
@@ -136,6 +139,7 @@ def stn_code_name(userinp):
 def stn_name_to_code(userinp):
     url = 'http://api.railwayapi.com/name_to_code/station/' + userinp + '/apikey/' + railway_api + '/'
     parsed_json = json.loads(requests.get(url).text)
+    print(parsed_json)
     stations = parsed_json['stations']
     l_of_s = len(stations)
     searchobj = userinp
@@ -194,6 +198,7 @@ def fetch_reschedule(request):
     #url = 'http://api.railwayapi.com/rescheduled/date/20-07-2016/apikey/paxbk6508/'
     url = 'http://api.railwayapi.com/rescheduled/date/' + dateinp[8:10] + '-' + dateinp[5:7] + '-' + dateinp[0:4] + '/apikey/' + railway_api + '/'
     parsed_json = json.loads(requests.get(url).text)
+    print(parsed_json)
     trains = parsed_json['trains']
     reschleduled_train = ''
     for x in range(len(trains)):
