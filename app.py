@@ -250,8 +250,8 @@ def webhook():
     for sender, message in messenger.messaging_events(payload):
         print "Incoming from %s: %s" % (sender, message)
         client.run_actions(sender, message, {})
-        print "Outgoing to %s: %s" % (sender, messageToSend)
-        messenger.send_message(FACEBOOK_TOKEN, sender, messageToSend)
+        print "Outgoing to %s: %s" % (sender, "Test")
+        messenger.send_message(FACEBOOK_TOKEN, sender, "test")
     
     return "ok"
 
