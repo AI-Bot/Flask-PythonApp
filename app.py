@@ -44,7 +44,10 @@ def first_entity_value(entities, entity):
     return val['value'] if isinstance(val, dict) else val
 
 def send(request, response):
+    print('Send Method')
     print(response['text'])
+    messageToSend = response['text']
+    done = True
 
 def fetch_statuspnr(request):
     context = request['context']
