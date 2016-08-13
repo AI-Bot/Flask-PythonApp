@@ -46,7 +46,9 @@ def first_entity_value(entities, entity):
 def send(request, response):
     print('Send Method')
     print(response['text'])
+    global messageToSend
     messageToSend = response['text']
+    global done
     done = True
 
 def fetch_statuspnr(request):
