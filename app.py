@@ -232,32 +232,37 @@ client = Wit(access_token, actions)
 
 # Set up webserver and respond to messages
 
+###
+# Routing for your application.
+###
 
-@app.route("/webhook", methods=['GET', 'POST'])
-def hello():
-    # Get request according to Facebook Requirements
-    if request.method == 'GET':
-        if (request.args.get("hub.verify_token") == os.environ.get('i_dont_have_password')):
-            return request.args.get("hub.challenge")
-    # Post Method for replying to messages
-    if request.method == 'POST':
-        output = request.json
-        event = output['entry'][0]['messaging']
-        for x in event:
-            if (x.get('message') and x['message'].get('text')):
-                message = x['message']['text']
-                recipient_id = x['sender']['id']
-                client.run_actions(recipient_id, message, {})
-                if done:
-                    print messageToSend
-                    bot.send_text_message(recipient_id, messageToSend)
-            else:
-                pass
-        return "success"
+
+@app.route('/webhook', methods=['GET'])
+def verify():
+    if request.args.get('hub.verify_token', '') == 'i_dont_have_password':
+        return request.args.get('hub.challenge', '')
+    else:
+        return 'Error, wrong validation token'
+
+@app.route('/webhook', methods=['POST'])
+def webhook():
+    output = request.json
+    event = output['entry'][0]['messaging']
+    for x in event:
+        if (x.get('message') and x['message'].get('text')):
+            message = x['message']['text']
+            recipient_id = x['sender']['id']
+            client.run_actions(recipient_id, message, {})
+            if done:
+                print messageToSend
+                bot.send_text_message(recipient_id, messageToSend)
+        else:
+            pass
+    return "success"
 
 
 # Default test route for server
-@app.route("/")
+@app.route('/', methods=['GET'])
 def new():
     return "Server is Online."
 
