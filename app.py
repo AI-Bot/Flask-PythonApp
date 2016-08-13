@@ -262,6 +262,10 @@ def webhook():
     
     return "ok"
 
+@app.route('/',methods=['GET'])
+def home():
+    return "Server is Online."
+
 ###
 # The functions below should be applicable to all Flask apps.
 ###
