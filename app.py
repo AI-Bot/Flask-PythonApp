@@ -246,20 +246,14 @@ def verify():
 
 @app.route('/webhook', methods=['POST'])
 def webhook():
-    output = request.json
-    event = output['entry'][0]['messaging']
-    for x in event:
-        if (x.get('message') and x['message'].get('text')):
-            message = x['message']['text']
-            recipient_id = x['sender']['id']
-            client.run_actions(recipient_id, message, {})
-            if done:
-                print messageToSend
-                bot.send_text_message(recipient_id, messageToSend)
-        else:
-            pass
-    return "success"
-
+    payload = request.get_data()
+    for sender, message in messenger.messaging_events(payload):
+        print "Incoming from %s: %s" % (sender, message)
+        client.run_actions(sender, message, {})
+        print "Outgoing to %s: %s" % (sender, messageToSend)
+        messenger.send_message(FACEBOOK_TOKEN, sender, messageToSend)
+    
+    return "ok"
 
 # Default test route for server
 @app.route('/', methods=['GET'])
