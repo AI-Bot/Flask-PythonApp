@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 import sys,json,requests,time,urllib,re
 from wit import Wit
 from flask import Flask, request
@@ -204,6 +206,8 @@ def say(session_id, context, msg):
     global done
     done = True
 
+def send(request, response):
+    print(response['text'])
 
 def error(session_id, context, e):
     print(str(e))
@@ -213,6 +217,7 @@ def error(session_id, context, e):
 
 actions = {
     'say': say,
+    'send': send,
     'fetch-statuspnr': fetch_statuspnr,
     'fetch-stncode': fetch_stncode,
     'fetch-stnname': fetch_stnname,
@@ -232,7 +237,7 @@ client = Wit(access_token, actions)
 def hello():
     # Get request according to Facebook Requirements
     if request.method == 'GET':
-        if (request.args.get("hub.verify_token") == os.environ.get('')):
+        if (request.args.get("hub.verify_token") == os.environ.get('i_dont_have_password')):
             return request.args.get("hub.challenge")
     # Post Method for replying to messages
     if request.method == 'POST':
@@ -257,6 +262,5 @@ def new():
     return "Server is Online."
 
 
-if __name__ == "__main__":
-    port = int(os.environ.get('PORT', 5000))
-    app.run(host="0.0.0.0", port=port)
+if __name__ == '__main__':
+    app.run(debug=True)
