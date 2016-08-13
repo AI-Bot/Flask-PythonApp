@@ -1,60 +1,54 @@
-import sys,json,requests,time,urllib,re
+import sys,json,requests,time,urllib
 from wit import Wit
-from flask import Flask, request
-from pymessenger.bot import Bot
-import requests
-import os
-
-
-# Insert Wit access token here. Don't forget to train the Wit bot.
-access_token = os.environ.get('JI2MGJMIPNKC53ROSCYCNXAOURR5STA3')
-
-# Facebook App access token. Don't forge to connect app to page.
-TOKEN = os.environ.get('EAAEAj1gffywBAO88EYz2x7IZA8o7sIza9oO0Cv99ocqzbeSKhsXta9jXFfrOZA9l3Np7ZCon0XlohnLJ0HcLEohUAag10fDITEt5rT2Ahue5b9mJbFJAcu7ysslDwv2953sHeQnM3w45WYVL5ATXliOoZA8KqZBkJ43IjOTA6bgZDZD')
-
-# Set up bot and flask app
-bot = Bot(TOKEN)
-app = Flask(__name__)
-
-# Global variables to ensure pymessenger bot waits for wit.ai to respond.
-messageToSend = 'This is default. Something is not correct'
-done = False
-
-
 railway_api='paxbk6508'
-
+if len(sys.argv) != 2:
+    print('usage: python ' + sys.argv[0] + ' <wit-token>')
+    exit(1)
+access_token = sys.argv[1]
+#hi
+#testing
+# Quickstart example
+# See https://wit.ai/ar7hur/Quickstart
 def fetch_stnname(request):
     context = request['context']
     entities = request['entities']
     userinp = first_entity_value(entities, 'location').upper()
     code=stn_name_to_code(userinp)
-    if code=='':
-        context['stnname'] = 'Not found'
-        return context
     context['stnname']=code
     return context
 
+def first_entity_value(entities, entity):
+    if entity not in entities:
+        return None
+    val = entities[entity][0]['value']
+    if not val:
+        return None
+    return val['value'] if isinstance(val, dict) else val
+
+def send(request, response):
+    print(response['text'])
+
+def get_forecast(request):
+    context = request['context']
+    entities = request['entities']
+    
+    loc = first_entity_value(entities, 'location')
+    
+    context['loc']=loc
+    if loc:
+        context['forecast'] = 'sunny'
+    else:
+        context['missingLocation'] = True
+        if context.get('forecast') is not None:
+            del context['forecast']
+    return context
 
 def fetch_statuspnr(request):
     context = request['context']
     entities = request['entities']
-    pnr=str(first_entity_value(entities,'number'))
-    pnr2 = first_entity_value(entities, 'location')
-    if pnr=='None':
-        #print('no pnr from number')
-        num=(re.findall(r'\b\d+\b', str(pnr2)))
-        if len(num)>0:
-            pnr=num[0]
-        else:
-            context['missingLocation']='yes'
-            return context
-
+    pnr=first_entity_value(entities,'number')
     url = 'http://api.railwayapi.com/pnr_status/pnr/' + str(pnr) + '/apikey/' + railway_api + '/'
     parsed_json = json.loads(requests.get(url).text)
-    error = (parsed_json['error'])
-    if str(error).lower() == 'true':
-        context['pnr_status']='Error: wrong pnr no./missing pnr'
-        return context
     from_stn = parsed_json['from_station']
     des_stn = parsed_json['reservation_upto']
     date_of_jrny = parsed_json['doj']
@@ -71,33 +65,17 @@ def fetch_statuspnr(request):
 def fetch_statustrain(request):
     context = request['context']
     entities = request['entities']
-    trainno=str(first_entity_value(entities,'number'))
-    trainno2= first_entity_value(entities, 'location')
-    if trainno=='None':
-        num = (re.findall(r'\b\d+\b', str(trainno2)))
-        
-        trainno=num[0]
-    
+    trainno=first_entity_value(entities,'number')
     url = 'http://api.railwayapi.com/live/train/'+str(trainno)+'/doj/' + str(time.strftime("%Y%m%d")) + '/apikey/' + railway_api + '/'
     parsed_json = json.loads(requests.get(url).text)
-    if str(parsed_json['response_code'])=='204':
-        context['train_status'] = 'Wrong Train no'
-        return context
-    if str(parsed_json['response_code']) == '510':
-        context['train_status'] = parsed_json['error']
-        return context
     train_status = parsed_json['position']
     context['train_status'] = train_status
     return context
 def fetch_stncode(request):
     context = request['context']
     entities = request['entities']
-    userinp=str(first_entity_value(entities,'location')).upper()
-    print(userinp)
+    userinp=first_entity_value(entities,'location').upper()
     name=stn_code_name(userinp)
-    if name=='':
-        context['stncode'] = "Wrong station code or enter in code capital letters"
-        return context
     context['stncode'] = name
     return context
 def stn_code_name(userinp):
@@ -189,30 +167,11 @@ def fetch_reschedule(request):
     context['reschedule_train']=str(reschleduled_train)
     return context
 
-def first_entity_value(entities, entity):
-    if entity not in entities:
-        return None
-    val = entities[entity][0]['value']
-    if not val:
-        return None
-    return val['value'] if isinstance(val, dict) else val
 
-
-def say(session_id, context, msg):
-    global messageToSend
-    messageToSend = str(msg)
-    global done
-    done = True
-
-
-def error(session_id, context, e):
-    print(str(e))
-
-
-# Calls pywapi to fetch weather info in realtime
 
 actions = {
-    'say': say,
+    'send': send,
+    'getForecast': get_forecast,
     'fetch-statuspnr': fetch_statuspnr,
     'fetch-stncode': fetch_stncode,
     'fetch-stnname': fetch_stnname,
@@ -220,43 +179,7 @@ actions = {
     'fetch-train':fetch_train,
     'fetch-cancelled':fetch_cancelled,
     'fetch-reschedule':fetch_reschedule,
-    'error': error,
 }
 
-client = Wit(access_token, actions)
-
-# Set up webserver and respond to messages
-
-
-@app.route("/webhook", methods=['GET', 'POST'])
-def hello():
-    # Get request according to Facebook Requirements
-    if request.method == 'GET':
-        if (request.args.get("hub.verify_token") == os.environ.get('')):
-            return request.args.get("hub.challenge")
-    # Post Method for replying to messages
-    if request.method == 'POST':
-        output = request.json
-        event = output['entry'][0]['messaging']
-        for x in event:
-            if (x.get('message') and x['message'].get('text')):
-                message = x['message']['text']
-                recipient_id = x['sender']['id']
-                client.run_actions(recipient_id, message, {})
-                if done:
-                    print messageToSend
-                    bot.send_text_message(recipient_id, messageToSend)
-            else:
-                pass
-        return "success"
-
-
-# Default test route for server
-@app.route("/")
-def new():
-    return "Server is Online."
-
-
-if __name__ == "__main__":
-    port = int(os.environ.get('PORT', 5000))
-    app.run(host="0.0.0.0", port=port)
+client = Wit(access_token=access_token, actions=actions)
+client.interactive()
