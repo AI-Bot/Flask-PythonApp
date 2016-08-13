@@ -1,10 +1,10 @@
 """
-Flask Documentation:     http://flask.pocoo.org/docs/
-Jinja2 Documentation:    http://jinja.pocoo.org/2/documentation/
-Werkzeug Documentation:  http://werkzeug.pocoo.org/documentation/
-
-This file creates your application.
-"""
+    Flask Documentation:     http://flask.pocoo.org/docs/
+    Jinja2 Documentation:    http://jinja.pocoo.org/2/documentation/
+    Werkzeug Documentation:  http://werkzeug.pocoo.org/documentation/
+    
+    This file creates your application.
+    """
 import warnings
 import os
 from flask import Flask,request, redirect, url_for
@@ -14,7 +14,7 @@ import messenger
 
 app = Flask(__name__)
 
-FACEBOOK_TOKEN ='EAAEAj1gffywBADfUP6JTpuI9nmvz9IlGfkvxKZBsXg7kO4ZA3TaSQy6PfbSZB3ZCMqEX3uzjUTVrq4g40CXk6LyOc5rekZBL1ZCBhpjWYulAPHHXZAfS3wpLwGp5EE9N0yAP3eIlD2mfZCAiAMW8HEUmf7bpG8AZCZAc4l5ZBZCloxnVlQZDZD'
+FACEBOOK_TOKEN ='EAAEAj1gffywBAOSBrW6yUKQCBzmVL2Km0bzCZAxmLZALX0PzwE82DO2YvG2I0BXPaTHMYnJWi6ZB3yZBZAxx1nRNTLqwIRHMQUSO1dcAW92IIZCnAr3SzT4naHNjbUEdem0j0fnI2oWHc1kMuAfKH0JP1MbZC2rwV3TvZBTpzomOLAZDZD'
 bot = None
 
 ###
