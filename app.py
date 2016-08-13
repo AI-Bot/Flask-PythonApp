@@ -224,7 +224,7 @@ actions = {
     'fetch-reschedule':fetch_reschedule,
 }
 
-client = Wit(access_token=access_token, actions=actions)
+client = Wit(access_token='JI2MGJMIPNKC53ROSCYCNXAOURR5STA3', actions=actions)
 
 ###
 # Routing for your application.
