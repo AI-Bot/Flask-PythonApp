@@ -12,7 +12,7 @@ import os
 access_token = os.environ.get('JI2MGJMIPNKC53ROSCYCNXAOURR5STA3')
 
 # Facebook App access token. Don't forge to connect app to page.
-TOKEN = os.environ.get('EAAEAj1gffywBAO88EYz2x7IZA8o7sIza9oO0Cv99ocqzbeSKhsXta9jXFfrOZA9l3Np7ZCon0XlohnLJ0HcLEohUAag10fDITEt5rT2Ahue5b9mJbFJAcu7ysslDwv2953sHeQnM3w45WYVL5ATXliOoZA8KqZBkJ43IjOTA6bgZDZD')
+TOKEN = os.environ.get('EAAEAj1gffywBAKvHRbcUdAU0MQjlp3pyVCtaHSxS8lJEYxbn0RhrcRJJselwSKTLddQ4Pzlc3QS1CJASjgZCPTsN5rrzfWAtmF079F2JaMWWfgm6qwKZCTvtT74DKoPxrj76GZBjMLzfEFGIqFXfGByk96ZA9RobuYIef6PQZCQZDZD')
 
 # Set up bot and flask app
 bot = Bot(TOKEN)
