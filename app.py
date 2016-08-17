@@ -21,8 +21,8 @@ bot = None
 
 messageToSend = 'This is default. Something is not correct'
 done = False
-
-railway_api='paxbk6508'
+#working file
+railway_api='hqvyn6929'
 
 def fetch_stnname(request):
     try:
@@ -62,75 +62,123 @@ def fetch_statuspnr(request):
     try:
         context = request['context']
         entities = request['entities']
-        pnr=str(first_entity_value(entities,'number'))
+        pnr = str(first_entity_value(entities, 'number'))
         pnr2 = first_entity_value(entities, 'location')
-        if pnr=='None':
-            #print('no pnr from number')
-            num=(re.findall(r'\b\d+\b', str(pnr2)))
-            if len(num)>0:
-                pnr=num[0]
+        if pnr == 'None':
+            # print('no pnr from number')
+            num = (re.findall(r'\b\d+\b', str(pnr2)))
+            if len(num) > 0:
+                pnr = num[0]
             else:
-                context['missingLocation']='yes'
+                context['missingLocation'] = 'yes'
                 return context
 
         url = 'http://api.railwayapi.com/pnr_status/pnr/' + str(pnr) + '/apikey/' + railway_api + '/'
         parsed_json = json.loads(requests.get(url).text)
         error = (parsed_json['error'])
-        if str(error).lower() == 'true':
-            context['pnr_status']='Error: wrong pnr no./missing pnr'
+        print('response code: ' + str(parsed_json['response_code']))
+        if str(parsed_json['response_code']) == '410':
+            #print('response code: ' + parsed_json['response_code'])
+            context['pnr_status'] = 'Flushed PNR / PNR not yet generated'
             return context
-        print(parsed_json)
-        from_stn = parsed_json['from_station']
-        des_stn = parsed_json['reservation_upto']
-        date_of_jrny = parsed_json['doj']
-        total_passengers = parsed_json['total_passengers']
-        passengers = parsed_json['passengers']
-        status_list = '\nFROM ' + from_stn['name'] + ' TO ' + des_stn['name'] + ' \nDate of Journey ' + date_of_jrny + '\n'
-        for x in range(total_passengers):
-            passenger_data = passengers[total_passengers - 1]
-            status_list = status_list + ' No. ' + str(passenger_data['no']) + ' Status ' + passenger_data['current_status'] + '  ->' + passenger_data['booking_status'] + '\n'
-            total_passengers = total_passengers - 1
-        context['pnr_status']=status_list
-        return context
+        if str(parsed_json['response_code']) == '404':
+           # print('response code: ' + parsed_json['response_code'])
+            context['pnr_status'] = 'Service Down / Source not responding'
+            return context
+        if str(parsed_json['response_code']) == '403':
+            #print('response code: ' + parsed_json['response_code'])
+            context['pnr_status'] = 'Quota exhausted for day'
+            return context
+        if str(parsed_json['response_code']) == '204':
+            #print('response code: ' + parsed_json['response_code'])
+            context['pnr_status'] = 'Empty response. Not able to fetch required data'
+            return context
+        if str(parsed_json['response_code']) == '200':
+
+            print(parsed_json)
+            from_stn = parsed_json['from_station']
+            des_stn = parsed_json['reservation_upto']
+            date_of_jrny = parsed_json['doj']
+            total_passengers = parsed_json['total_passengers']
+            passengers = parsed_json['passengers']
+            status_list = '\nFROM ' + from_stn['name'] + ' TO ' + des_stn[
+                'name'] + ' \nDate of Journey ' + date_of_jrny + '\n'
+            for x in range(total_passengers):
+                passenger_data = passengers[total_passengers - 1]
+                status_list = status_list + ' No. ' + str(passenger_data['no']) + ' Status ' + passenger_data[
+                    'current_status'] + '  ->' + passenger_data['booking_status'] + '\n'
+                total_passengers = total_passengers - 1
+            context['pnr_status'] = status_list
+            return context
+        if str(error).lower() == 'true':
+            context['pnr_status'] = 'Error: wrong pnr no./missing pnr'
+            return context
+
     except Exception:
+        
         context['pnr_status'] = 'Exception pnr'
         return context
 
 def fetch_statustrain(request):
-    try:
-        context = request['context']
-        entities = request['entities']
-        trainno=str(first_entity_value(entities,'number'))
-        trainno2= first_entity_value(entities, 'location')
-        if trainno=='None':
-            num = (re.findall(r'\b\d+\b', str(trainno2)))
+    #try:
+    context = request['context']
+    entities = request['entities']
+    trainno = str(first_entity_value(entities, 'number'))
+    trainno2 = first_entity_value(entities, 'location')
+    if trainno == 'None':
+        num = (re.findall(r'\b\d+\b', str(trainno2)))
+        trainno = num[0]
+    url = 'http://api.railwayapi.com/live/train/' + str(trainno) + '/doj/' + str(
+        time.strftime("%Y%m%d")) + '/apikey/' + railway_api + '/'
+    parsed_json = json.loads(requests.get(url).text)
+    print(parsed_json)
 
-            trainno=num[0]
-
-        url = 'http://api.railwayapi.com/live/train/'+str(trainno)+'/doj/' + str(time.strftime("%Y%m%d")) + '/apikey/' + railway_api + '/'
-        parsed_json = json.loads(requests.get(url).text)
-        print(parsed_json)
-        if str(parsed_json['response_code'])=='204':
-            context['train_status'] = 'Wrong Train no'
-            return context
-        if str(parsed_json['response_code']) == '510':
-            context['train_status'] = parsed_json['error']
-            return context
+    if str(parsed_json['response_code']) == '200':
         train_status = parsed_json['position']
         context['train_status'] = train_status
         return context
+    elif str(parsed_json['response_code']) == '204':
+        context['train_status'] = 'Wrong Train no'
+        return context
+    elif str(parsed_json['response_code']) == '510':
+        context['train_status'] = parsed_json['error']
+        return context
+    elif str(parsed_json['response_code']) == '403':
+        context['train_status'] = 'Quota for the day exhausted.'
+        return context
+    elif str(parsed_json['response_code']) == '404':
+        context['train_status'] = 'Service Down / Source not responding'
+        return context
+    elif str(parsed_json['response_code']) == '404':
+        train_status = parsed_json['position']
+        context['train_status'] = train_status
+        return context
+
+    '''
     except Exception:
         print('Exception')
         context['train_status'] = 'Exception train status'
         return context
-
+    '''
 
 def fetch_stncode(request):
     context = request['context']
     entities = request['entities']
     userinp=str(first_entity_value(entities,'location')).upper()
     print(userinp)
-    name=stn_code_name(userinp)
+    name,response_code=stn_code_name(userinp)
+    if str(parsed_json['response_code']) == '404':
+        train_status = parsed_json['position']
+        context['stncode'] = 'Service Down / Source not responding'
+        return context
+    if str(parsed_json['response_code']) == '403':
+        train_status = parsed_json['position']
+        context['stncode'] = 'Quota for the day exhausted.'
+        return context
+    if str(parsed_json['response_code']) == '204':
+        train_status = parsed_json['position']
+        context['stncode'] = 'Empty response. Not able to fetch required data.'
+        return context
     if name=='':
         context['stncode'] = "Wrong station code or enter in code capital letters"
         return context
@@ -144,13 +192,14 @@ def stn_code_name(userinp):
     l_of_s = len(stations)
     searchobj = userinp
     name_code = ''
+    response_code=parsed_json['response_code']
     while l_of_s > 0:
         data = stations[l_of_s - 1]
         if data['code'] == searchobj:
             name_code = (data['fullname'])
             break
         l_of_s = l_of_s - 1
-    return name_code
+    return name_code,response_code
 
 
 
@@ -173,17 +222,32 @@ def stn_name_to_code(userinp):
 
 
 def fetch_train(requests):
-    context = requests['context']
-    entities = requests['entities']
-    origin = stn_name_to_code(first_entity_value(entities, 'origin').upper())
-    dest = stn_name_to_code(first_entity_value(entities, 'destination').upper())
-    dt = first_entity_value(entities, 'datetime')
-    month = dt[5:7]
-    date = dt[8:10]
-    url = 'http://api.railwayapi.com/between/source/'+str(origin)+'/dest/'+str(dest)+'/date/'+str(date)+'-'+str(month)+'/apikey/'+railway_api+'/'
-    train_list=train_btw_stn(url)
-    context['train_list']=train_list
-    return context
+    try:
+        context = requests['context']
+        entities = requests['entities']
+        origin ,response_code1= stn_name_to_code(first_entity_value(entities, 'origin').upper())
+        dest,response_code2 = stn_name_to_code(first_entity_value(entities, 'destination').upper())
+        dt = first_entity_value(entities, 'datetime')
+        if str(response_code1)or str(response_code2) =='404':
+            context['train_list'] = 'Service Down / Source not responding'
+            return context
+        elif str(response_code1)or str(response_code2) == '204':
+            context['train_list'] = 'Not able to fetch required data.'
+            return context
+        elif str(response_code1)or str(response_code2) == '403':
+            context['train_list'] = 'Quota for the day exhausted.'
+            return context
+
+        month = dt[5:7]
+        date = dt[8:10]
+        url = 'http://api.railwayapi.com/between/source/'+str(origin)+'/dest/'+str(dest)+'/date/'+str(date)+'-'+str(month)+'/apikey/'+railway_api+'/'
+        train_list=train_btw_stn(url)
+        context['train_list']=train_list
+        return context
+    except Exception:
+        context['train_list'] = 'Exception train b/w stn'
+        return context
+
 
 def train_btw_stn(url):
     parsed_json = json.loads(requests.get(url).text)
@@ -201,16 +265,28 @@ def fetch_cancelled(request):
         dateinp=str(first_entity_value(entities, 'datetime'))
         url='http://api.railwayapi.com/cancelled/date/'+dateinp[8:10]+'-'+dateinp[5:7]+'-'+dateinp[0:4]+'/apikey/'+railway_api+'/'
         parsed_json = json.loads(requests.get(url).text)
-        trains = parsed_json['trains']
-        cancel_train = ''
-        for x in range(len(trains)):
-            data = trains[x]
-            train = data['train']
-            name = train['name']
-            num = train['number']
-            cancel_train = cancel_train + name + ' ' + num + '\n'
-        context['cancel_train']=cancel_train
-        return context
+        response_code=parsed_json['response_code']
+        print(response_code)
+        if str(response_code)=='204':
+            context['cancel_train'] = 'Not able to fetch required data.'
+            return context
+        elif str(response_code)=='404':
+            context['cancel_train'] = 'Service Down / Source not responding'
+            return context
+        elif str(response_code) == '403':
+            context['cancel_train'] = 'Quota for the day exhausted.'
+            return context
+        elif str(response_code) == '200':
+            trains = parsed_json['trains']
+            cancel_train = ''
+            for x in range(len(trains)):
+                data = trains[x]
+                train = data['train']
+                name = train['name']
+                num = train['number']
+                cancel_train = cancel_train + name + ' ' + num + '\n'
+            context['cancel_train']=cancel_train
+            return context
     except Exception:
         context['cancel_train']='exception cancelled'
         return context
@@ -224,17 +300,29 @@ def fetch_reschedule(request):
         #url = 'http://api.railwayapi.com/rescheduled/date/20-07-2016/apikey/paxbk6508/'
         url = 'http://api.railwayapi.com/rescheduled/date/' + dateinp[8:10] + '-' + dateinp[5:7] + '-' + dateinp[0:4] + '/apikey/' + railway_api + '/'
         parsed_json = json.loads(requests.get(url).text)
-        print(parsed_json)
-        trains = parsed_json['trains']
-        reschleduled_train = ''
-        for x in range(len(trains)):
-            data = trains[x]
-            name = data['name']
-            num = data['number']
-            reschleduled_train = reschleduled_train + name + ' ' + num + '\n'
-        #print(reschleduled_train)
-        context['reschedule_train']=str(reschleduled_train)
-        return context
+        response_code = parsed_json['response_code']
+        print(response_code)
+        if str(response_code) == '204':
+            context['reschedule_train'] = 'Not able to fetch required data.'
+            return context
+        elif str(response_code) == '404':
+            context['reschedule_train'] = 'Service Down / Source not responding'
+            return context
+        elif str(response_code) == '403':
+            context['reschedule_train'] = 'Quota for the day exhausted.'
+            return context
+        elif str(response_code) == '200':
+            print(parsed_json)
+            trains = parsed_json['trains']
+            reschleduled_train = ''
+            for x in range(len(trains)):
+                data = trains[x]
+                name = data['name']
+                num = data['number']
+                reschleduled_train = reschleduled_train + name + ' ' + num + '\n'
+            #print(reschleduled_train)
+            context['reschedule_train']=str(reschleduled_train)
+            return context
     except Exception:
         print('Exception rescheduled')
         context['reschedule_train'] = 'Exception rescheduled'
